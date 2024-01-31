@@ -1,0 +1,107 @@
+import pygame
+import sys
+import random
+
+pygame.init()
+
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+
+player_size = 50
+player_image = pygame.image.load("player.png")
+player_image = pygame.transform.scale(player_image, (player_size, player_size))
+player_pos = [SCREEN_WIDTH // 2, SCREEN_HEIGHT - player_size * 2]
+player_speed = 5
+
+bullet_size = 10
+bullet_speed = 10
+bullet_image = pygame.image.load("bullet.png")
+bullet_image = pygame.transform.scale(bullet_image, (bullet_size, bullet_size))
+bullets = []
+
+baby_size = 40
+baby_speed = 3
+baby_image = pygame.image.load("baby.png")
+baby_image = pygame.transform.scale(baby_image, (baby_size, baby_size))
+babys = []
+
+lives = 3
+
+# Background variables
+background_speed = 3
+background_image = pygame.image.load("background.png")
+background_image = pygame.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
+background_y = 0
+
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Tobis Life")
+
+def draw_background():
+    screen.blit(background_image, (0, background_y))
+    screen.blit(background_image, (0, background_y - SCREEN_HEIGHT))
+
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    keys = pygame.key.get_pressed()
+
+    if keys[pygame.K_LEFT] and player_pos[0] > 0:
+        player_pos[0] -= player_speed
+    if keys[pygame.K_RIGHT] and player_pos[0] < SCREEN_WIDTH - player_size:
+        player_pos[0] += player_speed
+
+    if keys[pygame.K_SPACE]:
+        bullet = [player_pos[0] + player_size // 2 - bullet_size // 2, player_pos[1]]
+        bullets.append(bullet)
+
+    for baby in babys:
+        baby[1] += baby_speed
+        if baby[1] > SCREEN_HEIGHT:
+            babys.remove(baby)
+            lives -= 1
+
+    for baby in babys:
+        if (
+            player_pos[0] < baby[0] < player_pos[0] + player_size
+            and player_pos[1] < baby[1] < player_pos[1] + player_size
+        ):
+            babys.remove(baby)
+            lives -= 1
+
+    for bullet in bullets:
+        for baby in babys:
+            if (
+                baby[0] < bullet[0] < baby[0] + baby_size
+                and baby[1] < bullet[1] < baby[1] + baby_size
+            ):
+                bullets.remove(bullet)
+                babys.remove(baby)
+
+    if lives <= 0:
+        lives = 3
+        babys = []
+
+    # Update background position
+    background_y += background_speed
+    if background_y > SCREEN_HEIGHT:
+        background_y = 0
+
+    screen.fill(WHITE)
+
+    draw_background()
+
+    screen.blit(player_image, (player_pos[0], player_pos[1]))
+
+    for bullet in bullets:
+        screen.blit(bullet_image, (bullet[0], bullet[1]))
+
+    for baby in babys:
+        screen.blit(baby_image, (baby[0], baby[1]))
+
+    pygame.display.update()
